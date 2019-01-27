@@ -20,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 
 import co.poynt.api.model.Card;
@@ -50,12 +52,33 @@ import co.poynt.os.services.v1.IPoyntTransactionService;
 import co.poynt.os.services.v1.IPoyntTransactionServiceListener;
 import co.poynt.samples.codesamples.utils.Util;
 
+import org.ksoap2.SoapEnvelope;
+import org.ksoap2.serialization.PropertyInfo;
+import org.ksoap2.serialization.SoapObject;
+import org.ksoap2.serialization.SoapSerializationEnvelope;
+import org.ksoap2.transport.HttpTransportSE;
+import org.ksoap2.HeaderProperty;
+
+import co.poynt.samples.hapiApi.api.ProfileApi;
+import co.poynt.samples.hapiApi.Configuration;
+import co.poynt.samples.hapiApi.model.Profile;
+import co.poynt.samples.hapiApi.auth.ApiKeyAuth;
+import co.poynt.samples.hapiApi.ApiClient;
+import co.poynt.samples.hapiApi.ApiException;
+
 public class PaymentActivity extends Activity {
 
     // request code for payment service activity
     private static final int COLLECT_PAYMENT_REQUEST = 13132;
     private static final int ZERO_DOLLAR_AUTH_REQUEST = 13133;
     private static final String TAG = PaymentActivity.class.getSimpleName();
+
+
+    private static final String SOAP_ACTION = "https://ich95-oho5-prod-env1-osb.hospitality.oracleindustry.com/OPERAOSB/OC_CRM/OperaCRMServices/ProfileService";
+    private static final String METHOD_NAME = "fetchProfiles";
+    private static final String WSDL_TARGET_NAMESPACE = "https://ich95-oho5-prod-env1-osb.hospitality.oracleindustry.com/OPERAOSB/OC_CRM/OperaCRMServices/";
+    private static final String SOAP_ADDRESS = "https://ich95-oho5-prod-env1-osb.hospitality.oracleindustry.com/OPERAOSB/OC_CRM/OperaCRMServices/ProfileService?WSDL";
+
 
     private IPoyntTransactionService mTransactionService;
     private IPoyntOrderService mOrderService;
@@ -69,6 +92,7 @@ public class PaymentActivity extends Activity {
 
     private Gson gson;
 
+    String firstName;
     String lastReferenceId;
 
 
@@ -110,6 +134,9 @@ public class PaymentActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /* payment page */
+        launchPoyntPayment(10l, null);
+
         setContentView(R.layout.activity_payment);
 
 
@@ -136,16 +163,21 @@ public class PaymentActivity extends Activity {
         gson = new Gson();
         chargeBtn = (Button) findViewById(R.id.chargeBtn);
         chargeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                launchPoyntPayment(100l, null);
+            public void onClick(View v) {
+                //hapi();
+
+                Intent intent = new Intent(PaymentActivity.this, CompleteActivity.class);
+
+                String temperature = temperatureSpinner.getSelectedItem().toString();
+                intent.putExtra("ROOM_TEMPERATURE", temperature);
+                String light = lightSpinner.getSelectedItem().toString();
+                intent.putExtra("ROOM_LIGHT", light);
+                intent.putExtra("FIRST_NAME", firstName);
+                startActivity(intent);
             }
         });
 
         chargeBtn.setEnabled(true);
-
-
-
 /*
 
         launchRegisterBtn = (Button) findViewById(R.id.launchRegisterBtn);
@@ -297,16 +329,16 @@ public class PaymentActivity extends Activity {
             payment.setAmount(order.getAmounts().getNetTotal());
         } else {
             // some random amount
-            payment.setAmount(10000l);
+            payment.setAmount(amount);
 
             // here's how tip can be disabled for tip enabled merchants
             // payment.setDisableTip(true);
             payment.setDisableTip(true);
         }
 
-        payment.setSkipSignatureScreen(true);
-        payment.setSkipReceiptScreen(true);
-        payment.setSkipPaymentConfirmationScreen(true);
+        //payment.setSkipSignatureScreen(true);
+        //payment.setSkipReceiptScreen(true);
+        //payment.setSkipPaymentConfirmationScreen(true);
 
         payment.setCallerPackageName("co.poynt.sample");
         Map<String, String> processorOptions = new HashMap<>();
@@ -327,7 +359,7 @@ public class PaymentActivity extends Activity {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) { // payment finished
         super.onActivityResult(requestCode, resultCode, data);
         Log.d(TAG, "Received onActivityResult (" + requestCode + ")");
         // Check which request we're responding to
@@ -395,10 +427,13 @@ public class PaymentActivity extends Activity {
                                     Card card = transaction.getFundingSource().getCard();
                                     logData(card.toString());
                                     logData(card.getCardHolderFullName());
+                                    firstName = card.getCardHolderFirstName();
+                                    TextView tv0 = (TextView)findViewById(R.id.nameTextView);
+                                    tv0.setText(firstName);
                                     logData(Long.toString(transaction.getCustomerUserId()));
                                 }
                             }
-
+                            Toast.makeText(getApplicationContext(), "Payment is successful", Toast.LENGTH_LONG).show();
 
                         } else if (payment.getStatus().equals(PaymentStatus.CANCELED)) {
                             logData("Payment Canceled");
@@ -431,6 +466,63 @@ public class PaymentActivity extends Activity {
         }
     }
 
+    private void hapi() {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+// Configure API key authorization: Bearer
+        ApiKeyAuth Bearer = (ApiKeyAuth) defaultClient.getAuthentication("Bearer");
+        Bearer.setApiKey("4a8ed04a-4f66-8d77-1832-40442363d026");
+// Uncomment the following line to set a prefix for the API key, e.g. "Token" (defaults to null)
+//Bearer.setApiKeyPrefix("Token");
+
+        ProfileApi apiInstance = new ProfileApi();
+        String propertyCode = "FRESNO"; // String | Property code as designated in the PMS
+        String id = "19369"; // String | PMS profile id
+        try {
+            Profile result = apiInstance.getProfile(propertyCode, id);
+            System.out.println(result.toString());
+            logData(result.toString());
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProfileApi#getProfile");
+            e.printStackTrace();
+        }
+    }
+/*
+    private void checkInPage() {
+        setContentView(R.layout.activity_payment);
+
+        //var view = LayoutInflater.Inflate(Resource.Layout.spinnerItem, null, false);
+
+        temperatureSpinner = (Spinner) findViewById(R.id.temperatureSpinner);
+        ArrayAdapter<CharSequence> temperatureAdapter = ArrayAdapter.createFromResource(this,
+                R.array.temperature_array, android.R.layout.simple_spinner_item);
+        temperatureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        temperatureSpinner.setAdapter(temperatureAdapter);
+
+        lightSpinner = (Spinner) findViewById(R.id.lightSpinner);
+        ArrayAdapter<CharSequence> lightAdapter = ArrayAdapter.createFromResource(this,
+                R.array.light_array, android.R.layout.simple_spinner_item);
+        lightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        lightSpinner.setAdapter(lightAdapter);
+
+
+
+        android.app.ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+//        gson = new GsonBuilder().setPrettyPrinting().create();
+        gson = new Gson();
+        chargeBtn = (Button) findViewById(R.id.chargeBtn);
+        chargeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                afterPayment();
+            }
+        });
+
+        chargeBtn.setEnabled(true);
+    }
+
     private void afterPayment(Payment payment) {
         List<Transaction> transactions = payment.getTransactions();
         String temperature = temperatureSpinner.getSelectedItem().toString();
@@ -446,8 +538,39 @@ public class PaymentActivity extends Activity {
                 logData(Long.toString(transaction.getCustomerUserId()));
             }
         }
-
     }
+*/
+
+    // SOAP
+    private void afterPayment() {
+        SoapObject request = new SoapObject(WSDL_TARGET_NAMESPACE, METHOD_NAME);
+
+        PropertyInfo info = new PropertyInfo();
+
+
+        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+        envelope.dotNet = true;
+        envelope.setOutputSoapObject(request);
+        HttpTransportSE httpTransport = new HttpTransportSE(SOAP_ADDRESS);
+
+        logData(request.toString());
+/*
+        try
+        {
+            List<HeaderProperty> headerList = new ArrayList<HeaderProperty>();
+            headerList.add(new HeaderProperty("Authorization", "Basic " + org.kobjects.base64.Base64.encode("username:password".getBytes())));
+
+            httpTransport.call(SOAP_ACTION, envelope, headerList);
+            SoapObject response = (SoapObject)envelope.getResponse();
+            String res = response.toString();
+            //response.getProperty(0).toString();
+            logData(res);
+        }
+        catch(Exception e) {
+            String ex = e.toString();
+        }*/
+    }
+
 
 
     /**

@@ -9,43 +9,99 @@
     tools:context="co.poynt.samples.codesamples.PaymentActivity">
 
 
+    <LinearLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="30dp">
+
+        <TextView
+            android:id="@+id/helloTextView"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="Hello, "
+            android:textAppearance="?android:textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/nameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textStyle="bold"
+            android:textAppearance="?android:textAppearanceLarge" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Room Preference"
+        android:text="Thank you for checking into this hotel"
         android:textAppearance="?android:textAppearanceLarge" />
 
-    <TextView
-        android:id="@+id/temperatureTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="temperature"
-        android:textAppearance="?android:textAppearanceLarge" />
-    <Spinner
-        android:id="@+id/temperatureSpinner"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="30dp">
+        <TextView
+            android:id="@+id/completeMessageTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your room number is "
+            android:textAppearance="?android:textAppearanceLarge" />
+        <TextView
+            android:id="@+id/completeMessageValueTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2301"
+            android:textStyle="bold"
+            android:textAppearance="?android:textAppearanceLarge" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/labelTextView"
+        android:id="@+id/explainMessageTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="light"
+        android:layout_marginTop="30dp"
+        android:text="Feel free to adjust your environmental settings."
         android:textAppearance="?android:textAppearanceLarge" />
-    <Spinner
-        android:id="@+id/lightSpinner"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+        <TextView
+            android:id="@+id/temperatureTextView"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:text="Temperature"
+            android:textAppearance="?android:textAppearanceLarge" />
+        <Spinner
+            android:id="@+id/temperatureSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_marginTop="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+        <TextView
+            android:id="@+id/labelTextView"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:text="Brightness"
+            android:textAppearance="?android:textAppearanceLarge" />
+        <Spinner
+            android:id="@+id/lightSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Check in"
+        android:layout_marginTop="15dp"
+        android:text="Submit"
         android:id="@+id/chargeBtn"/>
 
 <!--

@@ -7,6 +7,7 @@ android {
     defaultConfig {
         applicationId "co.poynt.samples.codesamples"
         minSdkVersion 19
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -17,16 +18,30 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+
+        repositories {
+            maven { url 'https://oss.sonatype.org/content/repositories/ksoap2-android-releases' }
+        }
+    }
+
+    dependencies {
+        provided 'javax.annotation:jsr250-api:1.0'
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
+    compile 'io.swagger:swagger-annotations:1.5.17'
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
+    compile 'com.squareup.okhttp:logging-interceptor:2.7.5'
+    compile 'org.threeten:threetenbp:1.3.5'
 
     compile 'co.poynt.api:android-api-model:1.2.111-SNAPSHOT@jar'
     compile 'co.poynt.android.sdk:poynt-sdk:1.2.29-SNAPSHOT@aar'
     compile 'com.google.code.gson:gson:2.8.0'
+    compile 'io.gsonfire:gson-fire:1.8.0'
 
     // JWT dependencies - if you want to parse JWTs
     compile 'net.jcip:jcip-annotations:1.0@jar'
@@ -43,5 +58,5 @@ dependencies {
 
     compile 'com.jakewharton:butterknife:7.0.1'
 
-
+    compile 'com.google.code.ksoap2-android:ksoap2-android:3.6.1'
 }
