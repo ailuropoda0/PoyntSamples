@@ -16,7 +16,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -33,6 +35,7 @@ import java.util.UUID;
 import co.poynt.api.model.Card;
 import co.poynt.api.model.CardType;
 import co.poynt.api.model.FundingSourceAccountType;
+import co.poynt.api.model.FundingSourceType;
 import co.poynt.api.model.Order;
 import co.poynt.api.model.Transaction;
 import co.poynt.api.model.TransactionAction;
@@ -57,10 +60,11 @@ public class PaymentActivity extends Activity {
     private IPoyntTransactionService mTransactionService;
     private IPoyntOrderService mOrderService;
 
+
+    private Spinner temperatureSpinner;
+    private Spinner lightSpinner;
+
     Button chargeBtn;
-    Button payOrderBtn;
-    Button launchRegisterBtn;
-    Button zeroDollarAuthBtn;
     TextView orderSavedStatus;
 
     private Gson gson;
@@ -105,7 +109,25 @@ public class PaymentActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_payment);
+
+
+        //var view = LayoutInflater.Inflate(Resource.Layout.spinnerItem, null, false);
+
+        temperatureSpinner = (Spinner) findViewById(R.id.temperatureSpinner);
+        ArrayAdapter<CharSequence> temperatureAdapter = ArrayAdapter.createFromResource(this,
+                R.array.temperature_array, android.R.layout.simple_spinner_item);
+        temperatureAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        temperatureSpinner.setAdapter(temperatureAdapter);
+
+        lightSpinner = (Spinner) findViewById(R.id.lightSpinner);
+        ArrayAdapter<CharSequence> lightAdapter = ArrayAdapter.createFromResource(this,
+                R.array.light_array, android.R.layout.simple_spinner_item);
+        lightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        lightSpinner.setAdapter(lightAdapter);
+
+
 
         android.app.ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -122,35 +144,7 @@ public class PaymentActivity extends Activity {
 
         chargeBtn.setEnabled(true);
 
-        orderSavedStatus = (TextView) findViewById(R.id.orderSavedStatus);
 
-
-        payOrderBtn = (Button) findViewById(R.id.payOrderBtn);
-        payOrderBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Order order = Util.generateOrder();
-                launchPoyntPayment(order.getAmounts().getNetTotal(), order);
-            }
-        });
-
-        Button launchTxnList = (Button) findViewById(R.id.launchTxnList);
-        launchTxnList.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent("poynt.intent.action.VIEW_TRANSACTIONS");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-        });
-
-        zeroDollarAuthBtn = (Button) findViewById(R.id.zeroDollarAuthBtn);
-        zeroDollarAuthBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                doZeroDollarAuth();
-            }
-        });
 
 /*
 
@@ -168,25 +162,6 @@ public class PaymentActivity extends Activity {
             }
         });
 */
-    }
-
-    private void doZeroDollarAuth() {
-        Payment p = new Payment();
-        p.setAction(TransactionAction.VERIFY);
-        p.setCurrency("USD");
-        p.setAuthzOnly(true);
-//        p.setVerifyOnly(true);
-        //p.setManualEntry(true);
-
-//        List<Transaction> transactions = new ArrayList<>();
-//        Transaction transaction = TransactionUtil.newInstance();
-//        transaction.setAction(TransactionAction.VERIFY);
-//        transactions.add(transaction);
-//        payment.setTransactions(transactions);
-
-        Intent collectPaymentIntent = new Intent(Intents.ACTION_COLLECT_PAYMENT);
-        collectPaymentIntent.putExtra(Intents.INTENT_EXTRAS_PAYMENT, p);
-        startActivityForResult(collectPaymentIntent, ZERO_DOLLAR_AUTH_REQUEST);
     }
 
     @Override
@@ -322,10 +297,11 @@ public class PaymentActivity extends Activity {
             payment.setAmount(order.getAmounts().getNetTotal());
         } else {
             // some random amount
-            payment.setAmount(1200l);
+            payment.setAmount(10000l);
 
             // here's how tip can be disabled for tip enabled merchants
             // payment.setDisableTip(true);
+            payment.setDisableTip(true);
         }
 
         payment.setSkipSignatureScreen(true);
@@ -407,10 +383,23 @@ public class PaymentActivity extends Activity {
 
                         Log.d(TAG, "Received onPaymentAction from PaymentFragment w/ Status("
                                 + payment.getStatus() + ")");
-                        if (payment.getStatus().equals(PaymentStatus.COMPLETED)) {
-                            logData("Payment Completed");
-                        } else if (payment.getStatus().equals(PaymentStatus.AUTHORIZED)) {
+                        if (payment.getStatus().equals(PaymentStatus.COMPLETED)
+                                || payment.getStatus().equals(PaymentStatus.AUTHORIZED)) {
+
+                            //  payment is successful
+
                             logData("Payment Authorized");
+                            List<Transaction> transactions = payment.getTransactions();
+                            for(Transaction transaction: transactions){
+                                if(transaction.getFundingSource().getType() == FundingSourceType.CREDIT_DEBIT) {
+                                    Card card = transaction.getFundingSource().getCard();
+                                    logData(card.toString());
+                                    logData(card.getCardHolderFullName());
+                                    logData(Long.toString(transaction.getCustomerUserId()));
+                                }
+                            }
+
+
                         } else if (payment.getStatus().equals(PaymentStatus.CANCELED)) {
                             logData("Payment Canceled");
                         } else if (payment.getStatus().equals(PaymentStatus.FAILED)) {
@@ -441,6 +430,25 @@ public class PaymentActivity extends Activity {
             }
         }
     }
+
+    private void afterPayment(Payment payment) {
+        List<Transaction> transactions = payment.getTransactions();
+        String temperature = temperatureSpinner.getSelectedItem().toString();
+        String light = lightSpinner.getSelectedItem().toString();
+        String name;
+
+        for(Transaction transaction: transactions){
+            if(transaction.getFundingSource().getType() == FundingSourceType.CREDIT_DEBIT) {
+                Card card = transaction.getFundingSource().getCard();
+                name = card.getCardHolderFullName();
+                logData(card.toString());
+                logData(card.getCardHolderFullName());
+                logData(Long.toString(transaction.getCustomerUserId()));
+            }
+        }
+
+    }
+
 
     /**
      * pulls transaction Ids by referenceId from the content provider

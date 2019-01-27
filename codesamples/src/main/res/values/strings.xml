@@ -22,4 +22,17 @@
     <string name="title_activity_multi_tender_test">MultiTenderTestActivity</string>
     <string name="title_activity_in_app_billing">InAppBillingActivity</string>
     <string name="title_activity_content_provider_sample">ContentProviderSampleActivity</string>
+
+    <string-array name="temperature_array">
+        <item>80</item>
+        <item>71</item>
+        <item>70</item>
+        <item>65</item>
+    </string-array>
+    <string-array name="light_array">
+        <item>Very Bright</item>
+        <item>Bright</item>
+        <item>Dim</item>
+    </string-array>
+
 </resources>
